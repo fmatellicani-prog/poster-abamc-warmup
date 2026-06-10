@@ -414,16 +414,21 @@ class HandInteractionManager {
 // PRELOAD
 // ============================================================
 function preload() {
-  // Carica il poster SVG originale come immagine
-  posterImg = loadImage('POSTER GIUSTO.svg');
+  // Carica il poster SVG originale come immagine (senza spazi nel nome)
+  posterImg = loadImage('poster.svg',
+    () => console.log('Poster SVG caricato con successo'),
+    () => console.warn('Errore caricamento poster.svg — verrà usato il fallback grafico')
+  );
 }
 
 // ============================================================
 // SETUP
 // ============================================================
 function setup() {
+  console.log('--- p5 SETUP avviato ---');
   let cnv = createCanvas(windowWidth, windowHeight);
   cnv.parent('poster-container');
+  console.log('Canvas creato:', width, 'x', height);
 
   // Inizializza preview canvas
   previewCanvas = document.getElementById('webcam-preview');
@@ -492,12 +497,18 @@ function draw() {
   background(0);
   calculateScale();
 
-  // --- DISEGNA SFONDO POSTER (SVG) ---
-  push();
-  translate(offsetX, offsetY);
-  scale(scaleFactor);
-  image(posterImg, 0, 0, SVG_W, SVG_H);
-  pop();
+  // --- DISEGNA SFONDO POSTER ---
+  if (posterImg && posterImg.width > 0) {
+    // Se l'immagine SVG è caricata, usala come sfondo
+    push();
+    translate(offsetX, offsetY);
+    scale(scaleFactor);
+    image(posterImg, 0, 0, SVG_W, SVG_H);
+    pop();
+  } else {
+    // Fallback: disegna il poster manualmente se l'immagine non è disponibile
+    drawFallbackPoster();
+  }
 
   // --- COPRI LE AREE ORIGINALI DEGLI ELEMENTI NON DRAGGED ---
   // Quando un elemento è fermo, copri la sua zona originale nel poster
@@ -652,6 +663,42 @@ function createPosterElements() {
     type: 'rect',
     fill: '#ffffff'
   }));
+}
+
+// ============================================================
+// FALLBACK: Disegna il poster manualmente senza l'immagine SVG
+// ============================================================
+function drawFallbackPoster() {
+  push();
+  translate(offsetX, offsetY);
+  scale(scaleFactor);
+
+  // Sfondo fucsia
+  fill(COL_BG);
+  noStroke();
+  rect(0, 0, SVG_W, SVG_H);
+
+  // Mostra un messaggio che invita a usare un server locale
+  textFont('VT323');
+  textSize(18);
+  fill('#000000');
+  textAlign(CENTER, CENTER);
+  text('Apri con un server locale per vedere il poster originale', SVG_W / 2, SVG_H / 2 - 40);
+  text('python3 -m http.server 8000', SVG_W / 2, SVG_H / 2);
+  text('oppure usa il mouse per interagire', SVG_W / 2, SVG_H / 2 + 40);
+
+  // Semplice anteprima stellata decorativa
+  stroke(COL_STROKE);
+  strokeWeight(2);
+  let cx = SVG_W / 2;
+  let cy = SVG_H / 2;
+  for (let i = 0; i < 8; i++) {
+    let angle = TWO_PI / 8 * i;
+    let r = 200;
+    line(cx, cy, cx + cos(angle) * r, cy + sin(angle) * r);
+  }
+
+  pop();
 }
 
 // ============================================================
