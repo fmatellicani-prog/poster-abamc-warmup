@@ -3,12 +3,14 @@
 // p5.js + ml5.js Handpose
 // Trascina gli elementi con il pizzico delle dita.
 // Batti le mani per far esplodere la tipografia.
+//
+// Il poster originale (poster.svg) e' lo sfondo HTML.
+// Il canvas p5.js e' trasparente e disegna SOLO gli elementi interattivi.
 // ============================================================
 
 // ============================================================
 // VARIABILI GLOBALI
 // ============================================================
-let posterImg;              // Immagine SVG del poster caricata in preload
 let posterElements = [];    // Array di PosterElement (tutti trascinabili)
 let particles = [];         // Array di TypographyParticle attive
 let handManager;            // Istanza di HandInteractionManager
@@ -18,7 +20,7 @@ let previewCanvas;          // Canvas DOM per preview webcam
 let previewCtx;             // Context 2D del preview canvas
 let isModelLoaded = false;
 let useMouseFallback = false;
-let scaleFactor = 1;        // Fattore di scala canvas → SVG
+let scaleFactor = 1;        // Fattore di scala canvas -> SVG
 let offsetX = 0;            // Offset X per centrare il poster
 let offsetY = 0;            // Offset Y per centrare il poster
 let flashFrames = 0;        // Frames di flash bianco per clap
@@ -35,6 +37,7 @@ const COL_STROKE = '#000000';
 // ============================================================
 // CLASSE BASE: PosterElement
 // ============================================================
+// Ogni elemento visivo interattivo eredita da questa classe.
 class PosterElement {
   constructor(x, y, w, h) {
     this.x = x;
@@ -87,60 +90,10 @@ class PosterElement {
 }
 
 // ============================================================
-// CLASSE: DraggableImageRegion
-// ============================================================
-// Mostra una porzione "crop" dell'immagine SVG originale.
-// Usata per le lettere e i blocchi del poster, in modo che
-// l'utente possa "staccarli" dal fondo muovendoli con le mani.
-class DraggableImageRegion extends PosterElement {
-  constructor(x, y, w, h, sourceImg, sx, sy, sw, sh, options = {}) {
-    super(x, y, w, h);
-    this.sourceImg = sourceImg;
-    this.sx = sx;      // coordinata X di crop nell'immagine sorgente
-    this.sy = sy;      // coordinata Y di crop
-    this.sw = sw;      // larghezza crop
-    this.sh = sh;      // altezza crop
-    this.originalX = x;
-    this.originalY = y;
-    this.label = options.label || '';
-  }
-
-  draw() {
-    push();
-    if (this.isDragging) {
-      translate(this.x + this.w / 2, this.y + this.h / 2);
-      scale(1.05);
-      translate(-(this.x + this.w / 2), -(this.y + this.h / 2));
-      stroke(COL_ACCENT);
-      strokeWeight(3);
-    } else if (this.isHovered) {
-      // Bordo tratteggiato lampeggiante verde
-      if (frameCount % 20 < 10) {
-        stroke(COL_ACCENT);
-        strokeWeight(2);
-        drawingContext.setLineDash([5, 5]);
-      }
-    } else {
-      noStroke();
-    }
-
-    // Disegna la regione dell'immagine (crop)
-    image(this.sourceImg, this.x, this.y, this.w, this.h, this.sx, this.sy, this.sw, this.sh);
-
-    drawingContext.setLineDash([]);
-    pop();
-  }
-
-  update() {
-    // Nessuna fisica propria; posizione aggiornata dal drag
-  }
-}
-
-// ============================================================
 // CLASSE: DraggableShape
 // ============================================================
 // Forma geometrica semplice (cerchio, rettangolo arrotondato,
-// poligono) usata come elemento grafico extra sopra il poster.
+// poligono) usata come elemento grafico interattivo sopra il poster.
 class DraggableShape extends PosterElement {
   constructor(x, y, w, h, options = {}) {
     super(x, y, w, h);
@@ -200,7 +153,7 @@ class DraggableShape extends PosterElement {
 // ============================================================
 // CLASSE: DraggableText
 // ============================================================
-// Blocco tipografico che può essere trascinato.
+// Blocco tipografico che puo' essere trascinato.
 // Quando scatta il clap, il testo esplode in particelle.
 class DraggableText extends PosterElement {
   constructor(x, y, text, size, options = {}) {
@@ -272,7 +225,7 @@ class TypographyParticle {
     this.char = char;
     this.size = size;
     this.color = color;
-    // Velocità iniziale casuale verso l'alto e lateralmente
+    // Velocita' iniziale casuale verso l'alto e lateralmente
     this.vx = random(-4, 4);
     this.vy = random(-8, -3);
     this.rotation = random(TWO_PI);
@@ -281,7 +234,7 @@ class TypographyParticle {
     this.opacity = 255;
     this.gravity = 0.25;
     this.friction = 0.98;
-    this.lifeDecay = random(3, 6); // Velocità di svanimento
+    this.lifeDecay = random(3, 6); // Velocita' di svanimento
   }
 
   update() {
@@ -382,7 +335,7 @@ class HandInteractionManager {
   }
 
   mapToCanvas(webcamX, webcamY) {
-    // La webcam è specchiata: flip orizzontale
+    // La webcam e' specchiata: flip orizzontale
     let sx = width / 640;
     let sy = height / 480;
     let cx = (640 - webcamX) * sx;
@@ -396,7 +349,7 @@ class HandInteractionManager {
       let palm = hand.landmarks[0];
       let mapped = this.mapToCanvas(palm[0], palm[1]);
       noStroke();
-      fill(255, 255, 255, 76); // 30% opacità
+      fill(255, 255, 255, 76); // 30% opacita'
       ellipse(mapped.x, mapped.y, 60, 60);
     }
 
@@ -408,17 +361,6 @@ class HandInteractionManager {
       ellipse(this.pinchX, this.pinchY, 30, 30);
     }
   }
-}
-
-// ============================================================
-// PRELOAD
-// ============================================================
-function preload() {
-  // Carica il poster SVG originale come immagine (senza spazi nel nome)
-  posterImg = loadImage('poster.svg',
-    () => console.log('Poster SVG caricato con successo'),
-    () => console.warn('Errore caricamento poster.svg — verrà usato il fallback grafico')
-  );
 }
 
 // ============================================================
@@ -494,36 +436,9 @@ function initHandpose() {
 // DRAW (loop principale)
 // ============================================================
 function draw() {
-  background(COL_BG); // Sfondo fucsia, non nero, così il canvas è sempre visibile
+  // NON disegnare background: il canvas e' trasparente,
+  // lo sfondo poster.svg e' gia' visibile come <img> HTML.
   calculateScale();
-
-  // --- DISEGNA SFONDO POSTER ---
-  if (posterImg && posterImg.width > 0) {
-    // Se l'immagine SVG è caricata, usala come sfondo
-    push();
-    translate(offsetX, offsetY);
-    scale(scaleFactor);
-    image(posterImg, 0, 0, SVG_W, SVG_H);
-    pop();
-  } else {
-    // Fallback: disegna il poster manualmente se l'immagine non è disponibile
-    drawFallbackPoster();
-  }
-
-  // --- COPRI LE AREE ORIGINALI DEGLI ELEMENTI NON DRAGGED ---
-  // Quando un elemento è fermo, copri la sua zona originale nel poster
-  // con un rettangolo del colore di sfondo, così sembra "staccato".
-  push();
-  translate(offsetX, offsetY);
-  scale(scaleFactor);
-  for (let el of posterElements) {
-    if (!el.isDragging && el instanceof DraggableImageRegion) {
-      fill(COL_BG);
-      noStroke();
-      rect(el.originalX, el.originalY, el.w, el.h);
-    }
-  }
-  pop();
 
   // --- GESTIONE DRAG (HAND TRACKING) ---
   if (!useMouseFallback) {
@@ -556,7 +471,7 @@ function draw() {
     }
   }
 
-  // --- DISEGNA ELEMENTI DEL POSTER (nella loro posizione corrente) ---
+  // --- DISEGNA ELEMENTI DEL POSTER ---
   push();
   translate(offsetX, offsetY);
   scale(scaleFactor);
@@ -588,57 +503,52 @@ function draw() {
 // ============================================================
 // CREAZIONE ELEMENTI DEL POSTER
 // ============================================================
+// Tutti gli elementi sono posizionati nello spazio SVG nativo
+// (595.28 x 841.89) e scalati automaticamente dal canvas.
 function createPosterElements() {
   // --- LETTERA A (top) ---
-  // Crop dall'immagine SVG originale: bounding box stimato
-  posterElements.push(new DraggableImageRegion(
-    350, 80, 90, 160, posterImg,
-    350, 80, 90, 160,
-    { label: 'A' }
-  ));
-
-  // --- LETTERA A (bottom) ---
-  posterElements.push(new DraggableImageRegion(
-    480, 650, 90, 160, posterImg,
-    480, 650, 90, 160,
-    { label: 'A2' }
-  ));
-
-  // --- LETTERA B ---
-  posterElements.push(new DraggableImageRegion(
-    410, 320, 180, 250, posterImg,
-    410, 320, 180, 250,
-    { label: 'B' }
-  ));
-
-  // --- LETTERA M ---
-  posterElements.push(new DraggableImageRegion(
-    180, 520, 200, 200, posterImg,
-    180, 520, 200, 200,
-    { label: 'M' }
-  ));
-
-  // --- LETTERA C ---
-  posterElements.push(new DraggableImageRegion(
-    110, 250, 90, 200, posterImg,
-    110, 250, 90, 200,
-    { label: 'C' }
-  ));
-
-  // --- WARMUP (rettangolo verde acido) ---
-  posterElements.push(new DraggableImageRegion(
-    333, 317, 186, 55, posterImg,
-    333, 317, 186, 55,
-    { label: 'WARMUP-rect' }
-  ));
-
-  // --- WARMUP (testo) ---
   posterElements.push(new DraggableText(
-    341, 348, 'WARMUP', 72,
+    340, 80, 'A', 160,
     { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
   ));
 
-  // --- FORME GEOMETRICHE EXTRA (elementi puramente grafici) ---
+  // --- LETTERA A (bottom) ---
+  posterElements.push(new DraggableText(
+    480, 650, 'A', 160,
+    { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
+  ));
+
+  // --- LETTERA B ---
+  posterElements.push(new DraggableText(
+    430, 340, 'B', 180,
+    { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
+  ));
+
+  // --- LETTERA M ---
+  posterElements.push(new DraggableText(
+    70, 540, 'M', 160,
+    { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
+  ));
+
+  // --- LETTERA C ---
+  posterElements.push(new DraggableText(
+    30, 270, 'C', 160,
+    { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
+  ));
+
+  // --- WARMUP (rettangolo verde acido dietro) ---
+  posterElements.push(new DraggableShape(
+    333, 317, 186, 55,
+    { type: 'rect', fill: '#0dff00', cornerRadius: 12.64 }
+  ));
+
+  // --- WARMUP (testo nero sopra) ---
+  posterElements.push(new DraggableText(
+    341, 320, 'WARMUP', 72,
+    { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
+  ));
+
+  // --- FORME GEOMETRICHE EXTRA ---
   // Cerchio fucsia in alto a sinistra
   posterElements.push(new DraggableShape(50, 50, 80, 80, {
     type: 'circle',
@@ -652,7 +562,7 @@ function createPosterElements() {
     cornerRadius: 12
   }));
 
-  // Ellisse verde acido a metà schermo
+  // Ellisse verde acido a meta' schermo
   posterElements.push(new DraggableShape(200, 400, 100, 60, {
     type: 'ellipse',
     fill: '#0dff00'
@@ -663,42 +573,6 @@ function createPosterElements() {
     type: 'rect',
     fill: '#ffffff'
   }));
-}
-
-// ============================================================
-// FALLBACK: Disegna il poster manualmente senza l'immagine SVG
-// ============================================================
-function drawFallbackPoster() {
-  push();
-  translate(offsetX, offsetY);
-  scale(scaleFactor);
-
-  // Sfondo fucsia
-  fill(COL_BG);
-  noStroke();
-  rect(0, 0, SVG_W, SVG_H);
-
-  // Mostra un messaggio che invita a usare un server locale
-  textFont('VT323');
-  textSize(18);
-  fill('#000000');
-  textAlign(CENTER, CENTER);
-  text('Apri con un server locale per vedere il poster originale', SVG_W / 2, SVG_H / 2 - 40);
-  text('python3 -m http.server 8000', SVG_W / 2, SVG_H / 2);
-  text('oppure usa il mouse per interagire', SVG_W / 2, SVG_H / 2 + 40);
-
-  // Semplice anteprima stellata decorativa
-  stroke(COL_STROKE);
-  strokeWeight(2);
-  let cx = SVG_W / 2;
-  let cy = SVG_H / 2;
-  for (let i = 0; i < 8; i++) {
-    let angle = TWO_PI / 8 * i;
-    let r = 200;
-    line(cx, cy, cx + cos(angle) * r, cy + sin(angle) * r);
-  }
-
-  pop();
 }
 
 // ============================================================
