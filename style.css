@@ -1,0 +1,77 @@
+/* Reset e fullscreen */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'VT323', monospace;
+}
+
+/* Container del poster: occupa tutto lo schermo */
+#poster-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* Canvas p5.js generato dinamicamente deve essere fullscreen */
+#poster-container canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Video webcam nascosto */
+#webcam {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  width: 640px;
+  height: 480px;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Preview webcam in basso a destra */
+#webcam-preview {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 160px;
+  height: 120px;
+  border-radius: 12px;
+  opacity: 0.7;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Messaggio di stato (caricamento / errore / fallback) */
+#status-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 12px 24px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #0dff00;
+  font-size: 1.4rem;
+  border-radius: 8px;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+}
+
+#status-message.visible {
+  opacity: 1;
+}

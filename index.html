@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABAMC — Poster Interattivo</title>
+  <!-- Google Font VT323 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <!-- p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <!-- ml5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ml5/0.20.0-alpha.3/ml5.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Container per il canvas p5 -->
+  <main id="poster-container"></main>
+  <!-- Video webcam nascosto per ml5 -->
+  <video id="webcam" autoplay playsinline muted></video>
+  <!-- Canvas di preview webcam (overlay UI) -->
+  <canvas id="webcam-preview"></canvas>
+  <!-- Messaggio di stato (caricamento / errore) -->
+  <div id="status-message"></div>
+  <script src="sketch.js"></script>
+</body>
+</html>
