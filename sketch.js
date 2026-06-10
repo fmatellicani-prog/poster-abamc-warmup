@@ -1,11 +1,12 @@
 // ============================================================
 // POSTER INTERATTIVO ABAMC
 // p5.js + ml5.js Handpose
+//
+// Il canvas disegna DIRETTAMENTE lo sfondo e gli elementi.
+// Nessuna dipendenza da immagini esterne — funziona sempre.
+//
 // Trascina gli elementi con il pizzico delle dita.
 // Batti le mani per far esplodere la tipografia.
-//
-// Il poster originale (poster.svg) e' lo sfondo HTML.
-// Il canvas p5.js e' trasparente e disegna SOLO gli elementi interattivi.
 // ============================================================
 
 // ============================================================
@@ -25,25 +26,24 @@ let offsetX = 0;            // Offset X per centrare il poster
 let offsetY = 0;            // Offset Y per centrare il poster
 let flashFrames = 0;        // Frames di flash bianco per clap
 
-// Dimensioni spazio nativo SVG
+// Dimensioni spazio nativo SVG (A4)
 const SVG_W = 595.28;
 const SVG_H = 841.89;
 
-// Colori
-const COL_BG = '#e6007e';
-const COL_ACCENT = '#0dff00';
-const COL_STROKE = '#000000';
+// Colori palette poster
+const COL_BG = '#e6007e';      // Fucsia/magenta sfondo
+const COL_ACCENT = '#0dff00';  // Verde acido
+const COL_STROKE = '#000000';  // Nero
 
 // ============================================================
 // CLASSE BASE: PosterElement
 // ============================================================
-// Ogni elemento visivo interattivo eredita da questa classe.
 class PosterElement {
   constructor(x, y, w, h) {
-    this.x = x;
-    this.y = y;
-    this.w = w || 0;
-    this.h = h || 0;
+    this.x = x;           // Posizione X nello spazio SVG nativo
+    this.y = y;           // Posizione Y nello spazio SVG nativo
+    this.w = w || 0;      // Larghezza (per hit-testing)
+    this.h = h || 0;      // Altezza (per hit-testing)
     this.isDragging = false;
     this.isHovered = false;
     this.dragOffsetX = 0;
@@ -58,16 +58,11 @@ class PosterElement {
     // override in subclasses
   }
 
-  /**
-   * Verifica se il punto (mx, my) nello spazio SVG nativo
-   * ricade dentro il bounding box dell'elemento.
-   */
+  /** Hit-test: il punto (mx, my) e' dentro il bounding box? */
   isPointInside(mx, my) {
     return (
-      mx >= this.x &&
-      mx <= this.x + this.w &&
-      my >= this.y &&
-      my <= this.y + this.h
+      mx >= this.x && mx <= this.x + this.w &&
+      my >= this.y && my <= this.y + this.h
     );
   }
 
@@ -92,12 +87,11 @@ class PosterElement {
 // ============================================================
 // CLASSE: DraggableShape
 // ============================================================
-// Forma geometrica semplice (cerchio, rettangolo arrotondato,
-// poligono) usata come elemento grafico interattivo sopra il poster.
+// Forme geometriche (rettangolo, cerchio, ellisse) trascinabili.
 class DraggableShape extends PosterElement {
   constructor(x, y, w, h, options = {}) {
     super(x, y, w, h);
-    this.type = options.type || 'rect';   // 'rect', 'circle', 'ellipse'
+    this.type = options.type || 'rect';
     this.fill = options.fill || '#000000';
     this.stroke = options.stroke || 'none';
     this.strokeWeight = options.strokeWeight || 0;
@@ -107,12 +101,14 @@ class DraggableShape extends PosterElement {
   draw() {
     push();
     if (this.isDragging) {
+      // Effetto sollevamento: ingrandisci e bordo verde
       translate(this.x + this.w / 2, this.y + this.h / 2);
       scale(1.05);
       translate(-(this.x + this.w / 2), -(this.y + this.h / 2));
       stroke(COL_ACCENT);
       strokeWeight(3);
     } else if (this.isHovered) {
+      // Bordo lampeggiante verde quando selezionabile
       if (frameCount % 20 < 10) {
         stroke(COL_ACCENT);
         strokeWeight(2);
@@ -146,18 +142,17 @@ class DraggableShape extends PosterElement {
   }
 
   update() {
-    // Nessuna fisica propria
+    // Nessuna animazione propria
   }
 }
 
 // ============================================================
 // CLASSE: DraggableText
 // ============================================================
-// Blocco tipografico che puo' essere trascinato.
-// Quando scatta il clap, il testo esplode in particelle.
+// Blocco tipografico trascinabile.
+// Quando scatta il clap, esplode in particelle.
 class DraggableText extends PosterElement {
   constructor(x, y, text, size, options = {}) {
-    // Stima larghezza in base a lunghezza testo e dimensione
     let approxW = text.length * size * 0.55;
     super(x, y, approxW, size);
     this.text = text;
@@ -197,15 +192,11 @@ class DraggableText extends PosterElement {
     // Nessuna fisica propria
   }
 
-  /**
-   * Esplode il testo in un array di TypographyParticle,
-   * una per ogni carattere.
-   */
+  /** Esplode il testo in un array di TypographyParticle. */
   explode() {
     let parts = [];
     for (let i = 0; i < this.text.length; i++) {
       let ch = this.text[i];
-      // Posizione approssimativa del carattere all'interno del blocco
       let px = this.x + i * (this.size * 0.55);
       let py = this.y + this.size * 0.5;
       parts.push(new TypographyParticle(px, py, ch, this.size, this.fill));
@@ -225,7 +216,6 @@ class TypographyParticle {
     this.char = char;
     this.size = size;
     this.color = color;
-    // Velocita' iniziale casuale verso l'alto e lateralmente
     this.vx = random(-4, 4);
     this.vy = random(-8, -3);
     this.rotation = random(TWO_PI);
@@ -234,7 +224,7 @@ class TypographyParticle {
     this.opacity = 255;
     this.gravity = 0.25;
     this.friction = 0.98;
-    this.lifeDecay = random(3, 6); // Velocita' di svanimento
+    this.lifeDecay = random(3, 6);
   }
 
   update() {
@@ -273,19 +263,18 @@ class TypographyParticle {
 // ============================================================
 // CLASSE: HandInteractionManager
 // ============================================================
-// Coordina il tracking ml5 Handpose, rileva pizzico e clap,
-// e disegna il feedback visivo delle mani.
+// Gestisce tracking ml5 Handpose, rileva pizzico e clap.
 class HandInteractionManager {
   constructor() {
-    this.hands = [];              // Dati raw delle mani (fino a 2)
-    this.pinchActive = false;     // Pizzico in corso?
-    this.pinchX = 0;              // Coordinate pizzico (canvas)
+    this.hands = [];
+    this.pinchActive = false;
+    this.pinchX = 0;
     this.pinchY = 0;
-    this.clapActive = false;      // Clap in questo frame?
+    this.clapActive = false;
     this.lastClapTime = 0;
-    this.pinchThreshold = 30;     // px webcam per attivare pizzico
-    this.pinchRelease = 40;       // px webcam per disattivare (hysteresis)
-    this.clapDistanceThreshold = 100; // px webcam per rilevare clap
+    this.pinchThreshold = 30;
+    this.pinchRelease = 40;
+    this.clapDistanceThreshold = 100;
     this.clapCooldownMs = 1500;
     this.prevPalmsDistance = Infinity;
   }
@@ -294,7 +283,7 @@ class HandInteractionManager {
     this.hands = predictions || [];
     this.clapActive = false;
 
-    // --- RILEVAMENTO PIZZICO ---
+    // Rilevamento PIZZICO
     this.pinchActive = false;
     this.pinchX = 0;
     this.pinchY = 0;
@@ -311,13 +300,13 @@ class HandInteractionManager {
         let mapped = this.mapToCanvas(midX, midY);
         this.pinchX = mapped.x;
         this.pinchY = mapped.y;
-        break; // Solo una mano per drag
+        break;
       }
     }
 
-    // --- RILEVAMENTO CLAP ---
+    // Rilevamento CLAP (battito delle mani)
     if (this.hands.length >= 2) {
-      let palm1 = this.hands[0].landmarks[0]; // wrist
+      let palm1 = this.hands[0].landmarks[0];
       let palm2 = this.hands[1].landmarks[0];
       let palmsDistance = dist(palm1[0], palm1[1], palm2[0], palm2[1]);
 
@@ -335,10 +324,9 @@ class HandInteractionManager {
   }
 
   mapToCanvas(webcamX, webcamY) {
-    // La webcam e' specchiata: flip orizzontale
     let sx = width / 640;
     let sy = height / 480;
-    let cx = (640 - webcamX) * sx;
+    let cx = (640 - webcamX) * sx;   // flip orizzontale (specchio)
     let cy = webcamY * sy;
     return { x: cx, y: cy };
   }
@@ -349,7 +337,7 @@ class HandInteractionManager {
       let palm = hand.landmarks[0];
       let mapped = this.mapToCanvas(palm[0], palm[1]);
       noStroke();
-      fill(255, 255, 255, 76); // 30% opacita'
+      fill(255, 255, 255, 76);
       ellipse(mapped.x, mapped.y, 60, 60);
     }
 
@@ -367,10 +355,8 @@ class HandInteractionManager {
 // SETUP
 // ============================================================
 function setup() {
-  console.log('--- p5 SETUP avviato ---');
   let cnv = createCanvas(windowWidth, windowHeight);
   cnv.parent('poster-container');
-  console.log('Canvas creato:', width, 'x', height);
 
   // Inizializza preview canvas
   previewCanvas = document.getElementById('webcam-preview');
@@ -379,11 +365,7 @@ function setup() {
   previewCtx = previewCanvas.getContext('2d');
 
   calculateScale();
-
-  // Manager mani
   handManager = new HandInteractionManager();
-
-  // Crea elementi del poster
   createPosterElements();
 
   // Avvia webcam
@@ -422,7 +404,7 @@ function initHandpose() {
     });
   });
 
-  // Timeout fallback: se il modello non si carica in 30s
+  // Timeout fallback 30 secondi
   setTimeout(() => {
     if (!isModelLoaded) {
       showStatus('Modello AI non caricato — usa mouse o tastiera');
@@ -436,11 +418,20 @@ function initHandpose() {
 // DRAW (loop principale)
 // ============================================================
 function draw() {
-  // NON disegnare background: il canvas e' trasparente,
-  // lo sfondo poster.svg e' gia' visibile come <img> HTML.
+  // Sfondo fucsia — disegnato DIRETTAMENTE nel canvas, no dipendenze esterne
+  background(COL_BG);
   calculateScale();
 
+  push();
+  translate(offsetX, offsetY);
+  scale(scaleFactor);
+
+  // --- DISEGNA SFONDO POSTER (stella decorativa) ---
+  drawPosterBackground();
+
   // --- GESTIONE DRAG (HAND TRACKING) ---
+  pop();  // torna in coordinate canvas per il pinch
+
   if (!useMouseFallback) {
     if (handManager.pinchActive) {
       let svgCoords = canvasToSvg(handManager.pinchX, handManager.pinchY);
@@ -465,10 +456,12 @@ function draw() {
   // --- AGGIORNA E DISEGNA PARTICELLE ---
   for (let i = particles.length - 1; i >= 0; i--) {
     particles[i].update();
+    // Disegna particelle in coordinate SVG
+    push();
+    translate(offsetX, offsetY);
+    scale(scaleFactor);
     particles[i].draw();
-    if (particles[i].isDead()) {
-      particles.splice(i, 1);
-    }
+    pop();
   }
 
   // --- DISEGNA ELEMENTI DEL POSTER ---
@@ -481,7 +474,7 @@ function draw() {
   }
   pop();
 
-  // --- FEEDBACK MANI (coordinate canvas) ---
+  // --- FEEDBACK MANI (coordinate canvas assolute) ---
   if (!useMouseFallback) {
     handManager.draw();
   }
@@ -501,42 +494,81 @@ function draw() {
 }
 
 // ============================================================
+// DISEGNA SFONDO POSTER (stella decorativa geometrica)
+// ============================================================
+function drawPosterBackground() {
+  noFill();
+  stroke(COL_STROKE);
+  strokeWeight(1.5);
+
+  let cx = SVG_W / 2;
+  let cy = SVG_H / 2;
+
+  // Raggi della stella
+  let r1 = 220;  // lungo
+  let r2 = 140;  // corto
+
+  // 8 raggi principali
+  for (let i = 0; i < 8; i++) {
+    let angle = TWO_PI / 8 * i - PI / 2;
+    let r = (i % 2 === 0) ? r1 : r2;
+    line(cx, cy, cx + cos(angle) * r, cy + sin(angle) * r);
+  }
+
+  // Raggi secondari (incroci)
+  for (let i = 0; i < 8; i++) {
+    let angle = TWO_PI / 8 * i - PI / 2 + PI / 8;
+    let r = (i % 2 === 0) ? r2 : r1;
+    line(cx, cy, cx + cos(angle) * r, cy + sin(angle) * r);
+  }
+
+  // Cerchio centrale decorativo
+  noFill();
+  stroke(COL_STROKE);
+  strokeWeight(2);
+  ellipse(cx, cy, 80, 80);
+
+  // Cerchi concentrici
+  strokeWeight(1);
+  ellipse(cx, cy, 160, 160);
+  ellipse(cx, cy, 240, 240);
+}
+
+// ============================================================
 // CREAZIONE ELEMENTI DEL POSTER
 // ============================================================
-// Tutti gli elementi sono posizionati nello spazio SVG nativo
-// (595.28 x 841.89) e scalati automaticamente dal canvas.
 function createPosterElements() {
   // --- LETTERA A (top) ---
   posterElements.push(new DraggableText(
-    340, 80, 'A', 160,
+    340, 100, 'A', 140,
     { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
   ));
 
   // --- LETTERA A (bottom) ---
   posterElements.push(new DraggableText(
-    480, 650, 'A', 160,
+    480, 650, 'A', 140,
     { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
   ));
 
   // --- LETTERA B ---
   posterElements.push(new DraggableText(
-    430, 340, 'B', 180,
+    420, 340, 'B', 160,
     { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
   ));
 
   // --- LETTERA M ---
   posterElements.push(new DraggableText(
-    70, 540, 'M', 160,
+    80, 540, 'M', 140,
     { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
   ));
 
   // --- LETTERA C ---
   posterElements.push(new DraggableText(
-    30, 270, 'C', 160,
+    60, 280, 'C', 140,
     { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
   ));
 
-  // --- WARMUP (rettangolo verde acido dietro) ---
+  // --- WARMUP (rettangolo verde acido) ---
   posterElements.push(new DraggableShape(
     333, 317, 186, 55,
     { type: 'rect', fill: '#0dff00', cornerRadius: 12.64 }
@@ -549,34 +581,29 @@ function createPosterElements() {
   ));
 
   // --- FORME GEOMETRICHE EXTRA ---
-  // Cerchio fucsia in alto a sinistra
+  // Cerchio fucsia
   posterElements.push(new DraggableShape(50, 50, 80, 80, {
-    type: 'circle',
-    fill: '#e6007e'
+    type: 'circle', fill: '#e6007e'
   }));
 
-  // Rettangolo arrotondato nero in basso a destra
+  // Rettangolo nero
   posterElements.push(new DraggableShape(450, 750, 120, 60, {
-    type: 'rect',
-    fill: '#000000',
-    cornerRadius: 12
+    type: 'rect', fill: '#000000', cornerRadius: 12
   }));
 
-  // Ellisse verde acido a meta' schermo
+  // Ellisse verde
   posterElements.push(new DraggableShape(200, 400, 100, 60, {
-    type: 'ellipse',
-    fill: '#0dff00'
+    type: 'ellipse', fill: '#0dff00'
   }));
 
-  // Rettangolo piccolo bianco (texture)
+  // Rettangolo bianco
   posterElements.push(new DraggableShape(500, 500, 40, 40, {
-    type: 'rect',
-    fill: '#ffffff'
+    type: 'rect', fill: '#ffffff'
   }));
 }
 
 // ============================================================
-// FUNZIONI DI SUPPORTO: COORDINATE, SCALA, DRAG
+// FUNZIONI DI SUPPORTO
 // ============================================================
 
 function calculateScale() {
@@ -602,7 +629,6 @@ let handDragElement = null;
 
 function handleDragAt(sx, sy) {
   if (!handDragElement) {
-    // Cerca elemento sotto il punto di pizzico
     for (let el of posterElements) {
       if (el.isPointInside(sx, sy)) {
         el.startDrag(sx, sy);
