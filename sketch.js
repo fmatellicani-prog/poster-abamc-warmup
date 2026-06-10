@@ -169,17 +169,37 @@ class DraggableText extends PosterElement {
     textSize(this.size);
     textAlign(this.align, this.baseline);
 
+    // Sfondo rettangolo dietro il testo per visibilita'
+    let padX = this.size * 0.15;
+    let padY = this.size * 0.1;
+    let bgW = this.w + padX * 2;
+    let bgH = this.h + padY * 2;
+    let bgX = this.x - padX;
+    let bgY = this.y - padY;
+
     if (this.isDragging) {
       translate(this.x + this.w / 2, this.y + this.h / 2);
       scale(1.05);
       translate(-(this.x + this.w / 2), -(this.y + this.h / 2));
-      fill(COL_ACCENT);
-      stroke(COL_ACCENT);
-      strokeWeight(2);
-    } else if (this.isHovered) {
+      // Sfondo verde acido durante drag
       fill(COL_ACCENT);
       noStroke();
+      rect(bgX, bgY, bgW, bgH, 8);
+      // Testo nero
+      fill('#000000');
+      noStroke();
+    } else if (this.isHovered) {
+      // Sfondo verde acido lampeggiante
+      fill(COL_ACCENT);
+      noStroke();
+      rect(bgX, bgY, bgW, bgH, 8);
+      fill('#000000');
+      noStroke();
     } else {
+      // Sfondo semi-trasparente nero per contrasto
+      fill(0, 0, 0, 160);
+      noStroke();
+      rect(bgX, bgY, bgW, bgH, 8);
       fill(this.fill);
       noStroke();
     }
@@ -393,6 +413,15 @@ function setup() {
 // INIT HANDPOSE (ml5)
 // ============================================================
 function initHandpose() {
+  // Verifica che ml5.js sia stato caricato correttamente
+  if (typeof ml5 === 'undefined') {
+    console.error('ml5.js non caricato! Controlla la connessione internet.');
+    showStatus('Errore: libreria ml5.js non caricata — usa mouse');
+    useMouseFallback = true;
+    setTimeout(hideStatus, 5000);
+    return;
+  }
+
   showStatus('Caricamento modello AI...');
   handposeModel = ml5.handpose(videoElement, () => {
     isModelLoaded = true;
@@ -541,25 +570,25 @@ function createPosterElements() {
   // --- LETTERA A (top) ---
   posterElements.push(new DraggableText(
     340, 100, 'A', 140,
-    { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
+    { fill: '#ffffff', font: 'VT323', align: LEFT, baseline: TOP }
   ));
 
   // --- LETTERA A (bottom) ---
   posterElements.push(new DraggableText(
     480, 650, 'A', 140,
-    { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
+    { fill: '#ffffff', font: 'VT323', align: LEFT, baseline: TOP }
   ));
 
   // --- LETTERA B ---
   posterElements.push(new DraggableText(
     420, 340, 'B', 160,
-    { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
+    { fill: '#ffffff', font: 'VT323', align: LEFT, baseline: TOP }
   ));
 
   // --- LETTERA M ---
   posterElements.push(new DraggableText(
     80, 540, 'M', 140,
-    { fill: '#000000', font: 'VT323', align: LEFT, baseline: TOP }
+    { fill: '#ffffff', font: 'VT323', align: LEFT, baseline: TOP }
   ));
 
   // --- LETTERA C ---
