@@ -494,7 +494,7 @@ function initHandpose() {
 // DRAW (loop principale)
 // ============================================================
 function draw() {
-  background(0);
+  background(COL_BG); // Sfondo fucsia, non nero, così il canvas è sempre visibile
   calculateScale();
 
   // --- DISEGNA SFONDO POSTER ---

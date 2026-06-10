@@ -13,15 +13,31 @@ html, body {
   font-family: 'VT323', monospace;
 }
 
-/* Container del poster: occupa tutto lo schermo */
+/* Sfondo poster SVG */
+#poster-bg {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 100vw;
+  max-height: 100vh;
+  width: auto;
+  height: auto;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Container del poster: canvas p5.js sopra lo sfondo */
 #poster-container {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
-  position: relative;
   z-index: 1;
 }
 
-/* Canvas p5.js generato dinamicamente deve essere fullscreen */
+/* Canvas p5.js: deve essere trasparente per lasciare vedere lo sfondo SVG */
 #poster-container canvas {
   display: block;
   width: 100vw;
@@ -54,7 +70,7 @@ html, body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-/* Messaggio di stato (caricamento / errore / fallback) */
+/* Messaggio di stato */
 #status-message {
   position: fixed;
   top: 50%;
